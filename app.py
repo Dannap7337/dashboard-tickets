@@ -9,7 +9,7 @@ st.title("📊 Panel de Control y Métricas de Tickets")
 # --- 1. Carga y limpieza de datos ---
 @st.cache_data(ttl=60)  # Recarga si actualizas el archivo en GitHub
 def load_data(file_path):
-    df = pd.read_excel(Book1.xlsx)
+    df = pd.read_excel(file_path)
     
     # Limpieza de nombres de columnas (elimina espacios en blanco)
     df.columns = df.columns.str.strip().str.upper()
@@ -39,7 +39,7 @@ def load_data(file_path):
     return df
 
 # Cargar el archivo directamente desde tu repositorio
-EXCEL_PATH = "tickets.xlsx"  # Ajusta al nombre exacto de tu archivo Excel
+EXCEL_PATH = "Book1.xlsx"  # Ajusta al nombre exacto de tu archivo Excel
 df = load_data(EXCEL_PATH)
 
 # --- 2. Lista de usuarios especiales SSC ---
