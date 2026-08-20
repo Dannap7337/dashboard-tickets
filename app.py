@@ -187,3 +187,16 @@ with row2_col2:
     )
     fig4.update_traces(textinfo='percent+value+label')
     st.plotly_chart(fig4, use_container_width=True)
+
+# ==========================================
+# 5. Vista General de Datos
+# ==========================================
+st.markdown("---")
+st.subheader("📋 Detalle de Tickets")
+
+# Identificar y descartar columnas relacionadas a 'FUERA DE MES' y calculadas
+cols_a_ocultar = [c for c in df.columns if ('FUERA' in c and 'MES' in c) or c == 'ES_FUERA_MES']
+df_tabla = df.drop(columns=cols_a_ocultar, errors='ignore')
+
+# Mostrar la tabla en el ancho completo del contenedor
+st.dataframe(df_tabla, use_container_width=True, hide_index=True)
