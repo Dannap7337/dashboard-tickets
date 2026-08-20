@@ -90,10 +90,10 @@ with row1_col1:
 # 2. Tickets Fuera de Mes (Pie Chart)
 # ==========================================
 with row1_col2:
-    st.subheader("📌 2. Tickets Fuera de Mes")
+    st.subheader("📌 2. Tickets Fuera de Tiempo")
     df_mes = df.copy()
     df_mes['TIPO_MES'] = df_mes['ES_FUERA_MES'].apply(
-        lambda x: 'Fuera de Mes (No Levantado)' if x else 'Mes Regular'
+        lambda x: 'Fuera de Tiempo (No Levantado)' if x else 'Mes Regular'
     )
     
     resumen_mes = df_mes['TIPO_MES'].value_counts().reset_index()
