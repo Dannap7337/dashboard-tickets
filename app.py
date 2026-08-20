@@ -45,13 +45,13 @@ BASE_DIR = Path(__file__).resolve().parent
 EXCEL_PATH = 'Book1.xlsx'
 df = load_data(EXCEL_PATH)
 
-# --- Lista editable de usuarios SSC ---
+# --- Lista de usuarios SSC ---
 USUARIOS_SSC = [
-    "ANA SOFIA JARA HERNANDEZ",
-    "MARIEL ARANZA ESPAÑA AGUILAR",
-    "MONSERRAT MARTINEZ CORDERO",
-    "TOMAS MAGNO PEREZ LORANCA",
-    "PAMELA JAZMIN SANCHEZ DIAZ"
+    "CASTILLO CONTRERAS, LAURA",
+    "HUERTA NIETO, OSVALDO",
+    "ALEJANDRO PÉREZ SALAZAR",
+    "Flores Rosas, Israel",
+    "SADIE VIVEROS"
 ]
 
 # Grid 2x2 para las 4 gráficas
