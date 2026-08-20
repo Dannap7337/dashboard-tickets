@@ -40,7 +40,7 @@ def load_data(file_path):
     return df
 
 BASE_DIR = Path(__file__).resolve().parent
-EXCEL_PATH = BASE_DIR / "Book1.xlsx"  # Tu archivo Excel
+EXCEL_PATH = "Book1.xlsx"  # Tu archivo Excel
 df = load_data(EXCEL_PATH)
 
 # --- Lista editable de usuarios SSC ---
