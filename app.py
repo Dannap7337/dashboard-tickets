@@ -156,16 +156,19 @@ with row2_col1:
 # ==========================================
 # 4. Cumplimiento Agenda (1 de Agosto a la fecha)
 # ==========================================
+# ==========================================
+# 4. Cumplimiento Agenda (1 de Agosto a la fecha)
+# ==========================================
 with row2_col2:
     st.subheader("📅 4. Cumplimiento de Agenda")
     
-    # Cálculo de días desde el 1 de agosto hasta hoy
+    # Cálculo automático de días transcurridos desde el 1 de agosto hasta hoy
     fecha_inicio = date(2026, 8, 1)
     hoy = date.today()
     total_dias_transcurridos = max(1, (hoy - fecha_inicio).days + 1)
     
-    # Selector rápido para los días que no se mandó a tiempo
-    dias_no_enviados = st.number_input("Días que NO se mandó a tiempo:", min_value=0, max_value=total_dias_transcurridos, value=0, step=1)
+    # Variable interna (cámbiala directamente aquí en el código cuando lo requieras)
+    dias_no_enviados = 0  
     dias_a_tiempo = max(0, total_dias_transcurridos - dias_no_enviados)
     
     df_agenda = pd.DataFrame({
