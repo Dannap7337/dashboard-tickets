@@ -194,9 +194,20 @@ with row2_col2:
 st.markdown("---")
 st.subheader("📋 Detalle de Tickets")
 
-# Identificar y descartar columnas relacionadas a 'FUERA DE MES' y calculadas
-cols_a_ocultar = [c for c in df.columns if ('FUERA' in c and 'MES' in c) or c == 'ES_FUERA_MES']
-df_tabla = df.drop(columns=cols_a_ocultar, errors='ignore')
+# 1. Crear una copia y calcular la clasificación SSC
+df_tabla = df.copy()
 
-# Mostrar la tabla en el ancho completo del contenedor
+df_tabla['CLASIFICACIÓN SSC'] = df_tabla.apply(
+    lambda r: 'Tickets SSC' if (
+        ('SSC' in str(r.get('FALLA', '')).upper()) or 
+        (str(r.get('USUARIO', '')).upper() in [u.upper() for u in USUARIOS_SSC])
+    ) else 'Soporte General',
+    axis=1
+)
+
+# 2. Identificar y descartar columnas relacionadas a 'FUERA DE MES'
+cols_a_ocultar = [c for c in df_tabla.columns if ('FUERA' in c and 'MES' in c) or c == 'ES_FUERA_MES']
+df_tabla = df_tabla.drop(columns=cols_a_ocultar, errors='ignore')
+
+# 3. Mostrar la tabla con la clasificación incluida
 st.dataframe(df_tabla, use_container_width=True, hide_index=True)
