@@ -111,33 +111,48 @@ with row1_col2:
     st.plotly_chart(fig2, use_container_width=True)
 
 # ==========================================
-# 3. Segundo Nivel - Abiertos / Cerrados (Sunburst / Anillos)
+# 3. Tickets Segundo Nivel vs Equipo (Sunburst 2 aros)
 # ==========================================
 with row2_col1:
     st.subheader("⚙️ 3. Tickets Segundo Nivel vs Equipo")
-    df_n2 = df.copy()
     
-    # Nivel 1: 'Segundo Nivel' (Hector) vs 'Equipo' (resto)
-    # Nivel 2: Para Segundo Nivel se abre en Abierto / Cerrado
-    def asignar_jerarquia(row):
-        if str(row['TECNICO']).upper() == 'HECTOR':
-            return 'Segundo Nivel', f"N2 - {row['ESTADO_LIMPIO']}"
-        else:
-            return 'Equipo General', 'Equipo General'
-            
-    df_n2[['NIVEL_1', 'NIVEL_2']] = df_n2.apply(asignar_jerarquia, axis=1, result_type='expand')
-    resumen_n2 = df_n2.groupby(['NIVEL_1', 'NIVEL_2']).size().reset_index(name='CANTIDAD')
+    # 1. Total del equipo general (no Hector)
+    total_equipo = len(df[df['TECNICO'].str.upper() != 'HECTOR'])
     
-    fig3 = px.sunburst(
-        resumen_n2,
-        path=['NIVEL_1', 'NIVEL_2'],
-        values='CANTIDAD',
-        color='NIVEL_1',
-        color_discrete_map={'Segundo Nivel': '#f39c12', 'Equipo General': '#bdc3c7'}
+    # 2. Tickets de Hector (Segundo Nivel)
+    df_hector = df[df['TECNICO'].str.upper() == 'HECTOR'].copy()
+    
+    # Regla: Si FIN es nulo/vacío -> Abierto, si tiene fecha -> Cerrado
+    df_hector['ESTADO_HECTOR'] = df_hector['FIN'].apply(
+        lambda x: 'Cerrado' if pd.notnull(x) and str(x).strip() != '' and str(x).strip() != 'NaT' else 'Abierto'
     )
-    fig3.update_traces(textinfo="label+value+percent parent")
-    st.plotly_chart(fig3, use_container_width=True)
+    
+    total_n2_cerrados = len(df_hector[df_hector['ESTADO_HECTOR'] == 'Cerrado'])
+    total_n2_abiertos = len(df_hector[df_hector['ESTADO_HECTOR'] == 'Abierto'])
+    total_segundo_nivel = total_n2_cerrados + total_n2_abiertos
 
+    # Construcción directa de la jerarquía de nodos
+    # Anillo 1 (Centro): 'Equipo General' y 'Segundo Nivel'
+    # Anillo 2 (Exterior): Solo hijos de 'Segundo Nivel' ('Cerrados' y 'Abiertos')
+    labels = ["Equipo General", "Segundo Nivel", "Cerrados (N2)", "Abiertos (N2)"]
+    parents = ["", "", "Segundo Nivel", "Segundo Nivel"]
+    values = [total_equipo, total_segundo_nivel, total_n2_cerrados, total_n2_abiertos]
+    
+    # Paleta de colores personalizada
+    colors = ["#bdc3c7", "#f39c12", "#27ae60", "#e74c3c"]
+
+    fig3 = go.Figure(go.Sunburst(
+        labels=labels,
+        parents=parents,
+        values=values,
+        branchvalues="total",
+        marker=dict(colors=colors),
+        textinfo="label+value+percent parent"
+    ))
+    
+    fig3.update_layout(margin=dict(t=10, l=10, r=10, b=10))
+    st.plotly_chart(fig3, use_container_width=True)
+    
 # ==========================================
 # 4. Cumplimiento Agenda (1 de Agosto a la fecha)
 # ==========================================
