@@ -8,7 +8,7 @@ st.title("📊 Panel de Control y Métricas de Tickets")
 
 # --- 1. Carga y limpieza de datos ---
 @st.cache_data(ttl=60)  # Recarga si actualizas el archivo en GitHub
-def load_data(Book1.xlsx):
+def load_data(file_path):
     df = pd.read_excel(Book1.xlsx)
     
     # Limpieza de nombres de columnas (elimina espacios en blanco)
