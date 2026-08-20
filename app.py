@@ -100,25 +100,26 @@ with col3:
     df_n2 = df[df['TECNICO'].str.upper() == 'HECTOR'].copy()
     
     if not df_n2.empty:
-        # Creamos una etiqueta clara para el nivel raíz
+        # Asegurar que no existan valores nulos en el path ni en los valores numéricos
         df_n2['SOPORTE'] = 'Soporte Nivel 2'
+        df_n2['ESTADO'] = df_n2['ESTADO'].fillna('Sin Estado').astype(str)
+        df_n2['FALLA'] = df_n2['FALLA'].fillna('Sin Falla').astype(str)
+        df_n2['HRS'] = pd.to_numeric(df_n2['HRS'], errors='coerce').fillna(1)
         
-        # Gráfica Sunburst: Soporte N2 -> Estado (Abierto/Cerrado) -> Falla
+        # Agrupar datos para evitar conflictos de hojas duplicadas en Plotly
+        df_sunburst = df_n2.groupby(['SOPORTE', 'ESTADO', 'FALLA'], as_index=False)['HRS'].sum()
+        
         fig3 = px.sunburst(
-            df_n2,
+            df_sunburst,
             path=['SOPORTE', 'ESTADO', 'FALLA'],
             values='HRS',
-            title=f"Distribución de Horas N2 ({len(df_n2)} tickets)",
-            color='ESTADO',
-            color_discrete_map={
-                'Cerrado': '#2ecc71',
-                'Abierto': '#e74c3c'
-            }
+            title=f"Distribución de Horas N2 ({len(df_n2)} tickets)"
         )
         fig3.update_traces(textinfo="label+value+percent parent")
         st.plotly_chart(fig3, use_container_width=True)
     else:
         st.info("No hay tickets asignados a Hector.")
+
 
 # GRÁFICA 4: Tickets SSC (Filtro por Falla o Usuario)
 with col4:
