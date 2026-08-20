@@ -1,48 +1,49 @@
+from pathlib import Path
+from datetime import date
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from pathlib import Path
+import plotly.graph_objects as go
 
 st.set_page_config(page_title="Dashboard de Tickets", layout="wide")
 st.title("📊 Panel de Control y Métricas de Tickets")
 
 # --- 1. Carga y limpieza de datos ---
-@st.cache_data(ttl=60)  # Recarga si actualizas el archivo en GitHub
+@st.cache_data(ttl=60)
 def load_data(file_path):
     df = pd.read_excel(file_path)
     
-    # Limpieza de nombres de columnas (elimina espacios en blanco)
+    # Estandarizar nombres de columnas eliminando espacios accidentales
     df.columns = df.columns.str.strip().str.upper()
     
-    # Conversión de fechas
-    df['INICIO'] = pd.to_datetime(df['INICIO'], errors='coerce')
-    df['FIN'] = pd.to_datetime(df['FIN'], errors='coerce')
-    
-    # Normalización de strings para comparaciones seguras
+    # Conversión de tipos
     df['TECNICO'] = df['TECNICO'].astype(str).str.strip().str.capitalize()
     df['FALLA'] = df['FALLA'].astype(str).str.strip()
     df['USUARIO'] = df['USUARIO'].astype(str).str.strip()
     
-    # Manejo y limpieza del ESTADO
+    # Estandarización de ESTADO (Abierto / Cerrado)
     if 'ESTADO' in df.columns:
-        df['ESTADO'] = df['ESTADO'].astype(str).str.strip().str.capitalize()
+        df['ESTADO_LIMPIO'] = df['ESTADO'].astype(str).apply(
+            lambda x: 'Abierto' if 'ABIERTO' in x.upper() else 'Cerrado'
+        )
     else:
-        # Si la fecha FIN existe se considera Cerrado, si no, Abierto
-        df['ESTADO'] = df['FIN'].apply(lambda x: 'Cerrado' if pd.notnull(x) else 'Abierto')
+        df['ESTADO_LIMPIO'] = df['FIN'].apply(lambda x: 'Cerrado' if pd.notnull(x) else 'Abierto')
 
-    # Manejo de la columna opcional FUERA_DE_MES
-    if 'FUERA_DE_MES' in df.columns:
-        df['FUERA_DE_MES'] = df['FUERA_DE_MES'].astype(str).str.strip().str.upper()
+    # Limpieza de la columna FUERA DE MES
+    col_fuera_mes = [c for c in df.columns if 'FUERA' in c and 'MES' in c]
+    if col_fuera_mes:
+        col = col_fuera_mes[0]
+        df['ES_FUERA_MES'] = df[col].astype(str).str.strip().isin(['1', '1.0', 'SI', 'TRUE', 'S'])
     else:
-        df['FUERA_DE_MES'] = 'NO'
+        df['ES_FUERA_MES'] = False
         
     return df
 
-# Cargar el archivo directamente desde tu repositorio
-EXCEL_PATH = "Book1.xlsx"  # Ajusta al nombre exacto de tu archivo Excel
+BASE_DIR = Path(__file__).resolve().parent
+EXCEL_PATH = BASE_DIR / "Book1.xlsx"  # Tu archivo Excel
 df = load_data(EXCEL_PATH)
 
-# --- 2. Lista de usuarios especiales SSC ---
+# --- Lista editable de usuarios SSC ---
 USUARIOS_SSC = [
     "ANA SOFIA JARA HERNANDEZ",
     "MARIEL ARANZA ESPAÑA AGUILAR",
@@ -51,93 +52,118 @@ USUARIOS_SSC = [
     "PAMELA JAZMIN SANCHEZ DIAZ"
 ]
 
-# --- 3. Métricas y Gráficas ---
+# Grid 2x2 para las 4 gráficas
+row1_col1, row1_col2 = st.columns(2)
+row2_col1, row2_col2 = st.columns(2)
 
-col1, col2 = st.columns(2)
-
-# GRÁFICA 1: Tickets no levantados en el mes
-with col1:
-    st.subheader("📌 Tickets No Levantados en el Mes")
-    df_no_mes = df[df['FUERA_DE_MES'].isin(['SI', '1', 'TRUE'])]
+# ==========================================
+# 1. SSC vs Soporte (Pie Chart)
+# ==========================================
+with row1_col1:
+    st.subheader("🏢 1. Clasificación: SSC vs Soporte General")
+    cond_falla = df['FALLA'].str.contains("SSC", case=False, na=False)
+    cond_user = df['USUARIO'].str.upper().isin([u.upper() for u in USUARIOS_SSC])
     
-    if not df_no_mes.empty:
-        fig1 = px.bar(
-            df_no_mes,
-            x="N° TICKET",
-            y="HRS",
-            color="TECNICO",
-            title=f"Tickets Extemporáneos Registrados ({len(df_no_mes)})",
-            hover_data=["USUARIO", "FALLA"],
-            text_auto=True
-        )
-        st.plotly_chart(fig1, use_container_width=True)
-    else:
-        st.info("No se encontraron tickets marcados como fuera de mes.")
-
-# GRÁFICA 2: Cumplimiento de Agenda Diaria (Día 1 a la fecha)
-with col2:
-    st.subheader("📅 Envío de Agenda / Actividad por Día")
-    df_dias = df.dropna(subset=['FIN']).copy()
-    df_dias['DIA'] = df_dias['FIN'].dt.date
-    
-    resumen_dias = df_dias.groupby('DIA').size().reset_index(name='TOTAL_TICKETS')
-    
-    fig2 = px.line(
-        resumen_dias,
-        x="DIA",
-        y="TOTAL_TICKETS",
-        markers=True,
-        title="Tickets Cerrados por Día",
-        labels={"DIA": "Fecha", "TOTAL_TICKETS": "Tickets Procesados"}
+    df_tipo = df.copy()
+    df_tipo['CATEGORIA'] = df_tipo.apply(
+        lambda r: 'Tickets SSC' if (('SSC' in str(r['FALLA']).upper()) or (str(r['USUARIO']).upper() in [u.upper() for u in USUARIOS_SSC])) else 'Soporte General',
+        axis=1
     )
+    
+    resumen_ssc = df_tipo['CATEGORIA'].value_counts().reset_index()
+    resumen_ssc.columns = ['Categoría', 'Cantidad']
+    
+    fig1 = px.pie(
+        resumen_ssc,
+        names='Categoría',
+        values='Cantidad',
+        hole=0.4,
+        color='Categoría',
+        color_discrete_map={'Tickets SSC': '#3498db', 'Soporte General': '#95a5a6'}
+    )
+    fig1.update_traces(textinfo='percent+value+label')
+    st.plotly_chart(fig1, use_container_width=True)
+
+# ==========================================
+# 2. Tickets Fuera de Mes (Pie Chart)
+# ==========================================
+with row1_col2:
+    st.subheader("📌 2. Tickets Fuera de Mes")
+    df_mes = df.copy()
+    df_mes['TIPO_MES'] = df_mes['ES_FUERA_MES'].apply(
+        lambda x: 'Fuera de Mes (No Levantado)' if x else 'Mes Regular'
+    )
+    
+    resumen_mes = df_mes['TIPO_MES'].value_counts().reset_index()
+    resumen_mes.columns = ['Tipo', 'Cantidad']
+    
+    fig2 = px.pie(
+        resumen_mes,
+        names='Tipo',
+        values='Cantidad',
+        hole=0.4,
+        color='Tipo',
+        color_discrete_map={'Fuera de Mes (No Levantado)': '#e74c3c', 'Mes Regular': '#2ecc71'}
+    )
+    fig2.update_traces(textinfo='percent+value+label')
     st.plotly_chart(fig2, use_container_width=True)
 
-col3, col4 = st.columns(2)
-
-# GRÁFICA 3: Tickets Nivel 2 - Hector (SUNBURST CHART)
-with col3:
-    st.subheader("⚙️ Nivel 2 - Hector (Sunburst)")
-    df_n2 = df[df['TECNICO'].str.upper() == 'HECTOR'].copy()
+# ==========================================
+# 3. Segundo Nivel - Abiertos / Cerrados (Sunburst / Anillos)
+# ==========================================
+with row2_col1:
+    st.subheader("⚙️ 3. Tickets Segundo Nivel vs Equipo")
+    df_n2 = df.copy()
     
-    if not df_n2.empty:
-        # Asegurar que no existan valores nulos en el path ni en los valores numéricos
-        df_n2['SOPORTE'] = 'Soporte Nivel 2'
-        df_n2['ESTADO'] = df_n2['ESTADO'].fillna('Sin Estado').astype(str)
-        df_n2['FALLA'] = df_n2['FALLA'].fillna('Sin Falla').astype(str)
-        df_n2['HRS'] = pd.to_numeric(df_n2['HRS'], errors='coerce').fillna(1)
-        
-        # Agrupar datos para evitar conflictos de hojas duplicadas en Plotly
-        df_sunburst = df_n2.groupby(['SOPORTE', 'ESTADO', 'FALLA'], as_index=False)['HRS'].sum()
-        
-        fig3 = px.sunburst(
-            df_sunburst,
-            path=['SOPORTE', 'ESTADO', 'FALLA'],
-            values='HRS',
-            title=f"Distribución de Horas N2 ({len(df_n2)} tickets)"
-        )
-        fig3.update_traces(textinfo="label+value+percent parent")
-        st.plotly_chart(fig3, use_container_width=True)
-    else:
-        st.info("No hay tickets asignados a Hector.")
-
-
-# GRÁFICA 4: Tickets SSC (Filtro por Falla o Usuario)
-with col4:
-    st.subheader("🏢 Tickets SSC")
-    condicion_falla = df['FALLA'].str.contains("SSC", case=False, na=False)
-    condicion_usuario = df['USUARIO'].str.upper().isin([u.upper() for u in USUARIOS_SSC])
+    # Nivel 1: 'Segundo Nivel' (Hector) vs 'Equipo' (resto)
+    # Nivel 2: Para Segundo Nivel se abre en Abierto / Cerrado
+    def asignar_jerarquia(row):
+        if str(row['TECNICO']).upper() == 'HECTOR':
+            return 'Segundo Nivel', f"N2 - {row['ESTADO_LIMPIO']}"
+        else:
+            return 'Equipo General', 'Equipo General'
+            
+    df_n2[['NIVEL_1', 'NIVEL_2']] = df_n2.apply(asignar_jerarquia, axis=1, result_type='expand')
+    resumen_n2 = df_n2.groupby(['NIVEL_1', 'NIVEL_2']).size().reset_index(name='CANTIDAD')
     
-    df_ssc = df[condicion_falla | condicion_usuario]
+    fig3 = px.sunburst(
+        resumen_n2,
+        path=['NIVEL_1', 'NIVEL_2'],
+        values='CANTIDAD',
+        color='NIVEL_1',
+        color_discrete_map={'Segundo Nivel': '#f39c12', 'Equipo General': '#bdc3c7'}
+    )
+    fig3.update_traces(textinfo="label+value+percent parent")
+    st.plotly_chart(fig3, use_container_width=True)
+
+# ==========================================
+# 4. Cumplimiento Agenda (1 de Agosto a la fecha)
+# ==========================================
+with row2_col2:
+    st.subheader("📅 4. Cumplimiento de Agenda")
     
-    if not df_ssc.empty:
-        fig4 = px.bar(
-            df_ssc,
-            x="USUARIO",
-            y="HRS",
-            color="FALLA",
-            title=f"Total Horas SSC ({len(df_ssc)} tickets)",
-            barmode="stack"
-        )
-        st.plotly_chart(fig4, use_container_width=True)
-    else:
-        st.info("No se registraron tickets del área SSC.")
+    # Cálculo de días desde el 1 de agosto hasta hoy
+    fecha_inicio = date(2026, 8, 1)
+    hoy = date.today()
+    total_dias_transcurridos = max(1, (hoy - fecha_inicio).days + 1)
+    
+    # Selector rápido para los días que no se mandó a tiempo
+    dias_no_enviados = st.number_input("Días que NO se mandó a tiempo:", min_value=0, max_value=total_dias_transcurridos, value=0, step=1)
+    dias_a_tiempo = max(0, total_dias_transcurridos - dias_no_enviados)
+    
+    df_agenda = pd.DataFrame({
+        'Estado Agenda': ['Enviada a Tiempo', 'No Enviada / Con Retraso'],
+        'Días': [dias_a_tiempo, dias_no_enviados]
+    })
+    
+    fig4 = px.pie(
+        df_agenda,
+        names='Estado Agenda',
+        values='Días',
+        hole=0.4,
+        color='Estado Agenda',
+        color_discrete_map={'Enviada a Tiempo': '#27ae60', 'No Enviada / Con Retraso': '#c0392b'},
+        title=f"Total: {total_dias_transcurridos} días (1 Ago - Hoy)"
+    )
+    fig4.update_traces(textinfo='percent+value+label')
+    st.plotly_chart(fig4, use_container_width=True)
