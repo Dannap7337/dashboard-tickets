@@ -7,8 +7,8 @@ st.title("📊 Panel de Control y Métricas de Tickets")
 
 # --- 1. Carga y limpieza de datos ---
 @st.cache_data(ttl=60)  # Recarga si actualizas el archivo en GitHub
-def load_data(Book1.xlsx):
-    df = pd.read_excel(Book1.xlsx)
+def load_data(file_path):
+    df = pd.read_excel(file_path)
     
     # Limpieza de nombres de columnas (elimina espacios en blanco)
     df.columns = df.columns.str.strip().str.upper()
@@ -22,7 +22,14 @@ def load_data(Book1.xlsx):
     df['FALLA'] = df['FALLA'].astype(str).str.strip()
     df['USUARIO'] = df['USUARIO'].astype(str).str.strip()
     
-    # Si agregaste la columna 'FUERA_DE_MES', la normalizamos
+    # Manejo y limpieza del ESTADO
+    if 'ESTADO' in df.columns:
+        df['ESTADO'] = df['ESTADO'].astype(str).str.strip().str.capitalize()
+    else:
+        # Si la fecha FIN existe se considera Cerrado, si no, Abierto
+        df['ESTADO'] = df['FIN'].apply(lambda x: 'Cerrado' if pd.notnull(x) else 'Abierto')
+
+    # Manejo de la columna opcional FUERA_DE_MES
     if 'FUERA_DE_MES' in df.columns:
         df['FUERA_DE_MES'] = df['FUERA_DE_MES'].astype(str).str.strip().str.upper()
     else:
@@ -31,7 +38,7 @@ def load_data(Book1.xlsx):
     return df
 
 # Cargar el archivo directamente desde tu repositorio
-EXCEL_PATH = "tickets.xlsx"  # Ajusta la ruta a tu archivo
+EXCEL_PATH = "tickets.xlsx"  # Ajusta al nombre exacto de tu archivo Excel
 df = load_data(EXCEL_PATH)
 
 # --- 2. Lista de usuarios especiales SSC ---
@@ -86,19 +93,28 @@ with col2:
 
 col3, col4 = st.columns(2)
 
-# GRÁFICA 3: Tickets de Nivel 2 (Hector)
+# GRÁFICA 3: Tickets Nivel 2 - Hector (SUNBURST CHART)
 with col3:
-    st.subheader("⚙️ Tickets Nivel 2 (Hector)")
-    df_n2 = df[df['TECNICO'].str.upper() == 'HECTOR']
+    st.subheader("⚙️ Nivel 2 - Hector (Sunburst)")
+    df_n2 = df[df['TECNICO'].str.upper() == 'HECTOR'].copy()
     
     if not df_n2.empty:
-        fig3 = px.pie(
+        # Creamos una etiqueta clara para el nivel raíz
+        df_n2['SOPORTE'] = 'Soporte Nivel 2'
+        
+        # Gráfica Sunburst: Soporte N2 -> Estado (Abierto/Cerrado) -> Falla
+        fig3 = px.sunburst(
             df_n2,
-            names="FALLA",
-            values="HRS",
+            path=['SOPORTE', 'ESTADO', 'FALLA'],
+            values='HRS',
             title=f"Distribución de Horas N2 ({len(df_n2)} tickets)",
-            hole=0.4
+            color='ESTADO',
+            color_discrete_map={
+                'Cerrado': '#2ecc71',
+                'Abierto': '#e74c3c'
+            }
         )
+        fig3.update_traces(textinfo="label+value+percent parent")
         st.plotly_chart(fig3, use_container_width=True)
     else:
         st.info("No hay tickets asignados a Hector.")
