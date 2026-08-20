@@ -9,31 +9,33 @@ st.set_page_config(page_title="Dashboard de Tickets", layout="wide")
 st.title("📊 Panel de Control y Métricas de Tickets")
 
 # --- 1. Carga y limpieza de datos ---
+
+# --- 1. Carga y limpieza de datos ---
 @st.cache_data(ttl=60)
 def load_data(file_path):
     df = pd.read_excel(file_path)
     
-    # Estandarizar nombres de columnas eliminando espacios accidentales
-    df.columns = df.columns.str.strip().str.upper()
+    # Estandarizar nombres de columnas
+    df.columns = df.columns.astype(str).str.strip().str.upper()
     
-    # Conversión de tipos
-    df['TECNICO'] = df['TECNICO'].astype(str).str.strip().str.capitalize()
-    df['FALLA'] = df['FALLA'].astype(str).str.strip()
-    df['USUARIO'] = df['USUARIO'].astype(str).str.strip()
+    # Conversión segura de strings
+    df['TECNICO'] = df['TECNICO'].fillna('').astype(str).str.strip().str.capitalize()
+    df['FALLA'] = df['FALLA'].fillna('').astype(str).str.strip()
+    df['USUARIO'] = df['USUARIO'].fillna('').astype(str).str.strip()
     
-    # Estandarización de ESTADO (Abierto / Cerrado)
+    # Estandarización 100% segura de ESTADO
     if 'ESTADO' in df.columns:
-        df['ESTADO_LIMPIO'] = df['ESTADO'].astype(str).apply(
-            lambda x: 'Abierto' if 'ABIERTO' in x.upper() else 'Cerrado'
+        df['ESTADO_LIMPIO'] = df['ESTADO'].fillna('').astype(str).apply(
+            lambda x: 'Abierto' if 'ABIERTO' in str(x).upper() else 'Cerrado'
         )
     else:
         df['ESTADO_LIMPIO'] = df['FIN'].apply(lambda x: 'Cerrado' if pd.notnull(x) else 'Abierto')
 
-    # Limpieza de la columna FUERA DE MES
+    # Limpieza segura de la columna FUERA DE MES
     col_fuera_mes = [c for c in df.columns if 'FUERA' in c and 'MES' in c]
     if col_fuera_mes:
         col = col_fuera_mes[0]
-        df['ES_FUERA_MES'] = df[col].astype(str).str.strip().isin(['1', '1.0', 'SI', 'TRUE', 'S'])
+        df['ES_FUERA_MES'] = df[col].fillna('').astype(str).str.strip().str.upper().isin(['1', '1.0', 'SI', 'TRUE', 'S'])
     else:
         df['ES_FUERA_MES'] = False
         
