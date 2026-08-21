@@ -188,6 +188,72 @@ with row2_col2:
     fig4.update_traces(textinfo='percent+value+label')
     st.plotly_chart(fig4, use_container_width=True)
 
+st.markdown("---")
+st.subheader("📋 5. Cumplimiento de Actividades Semanales (Semana Actual)")
+
+# Matriz semanal: 1 = Completado, None = Pendiente de confirmación
+data_semana = {
+    "Día": ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"],
+    "Técnico": ["Juan Carlos"] * 5,
+    "1. Revisión Correo": [1, 1, 1, 1, 1],
+    "2. Evidencia Inicial": [1, 1, 1, 1, 1],
+    "3. Evidencia Final": [1, 1, 1, 1, None],      # 2 actividades de la tarde pendientes
+    "4. Envío Agenda": [1, 1, 1, 1, None]          # 2 actividades de la tarde pendientes
+}
+
+df_actividades = pd.DataFrame(data_semana)
+cols_actividades = ["1. Revisión Correo", "2. Evidencia Inicial", "3. Evidencia Final", "4. Envío Agenda"]
+
+total_actividades = len(df_actividades) * len(cols_actividades)  # 20 actividades = 100%
+valores = df_actividades[cols_actividades].values.flatten()
+
+completadas = int(pd.Series(valores).eq(1).sum())
+no_cumplidas = int(pd.Series(valores).eq(0).sum())
+pendientes = int(pd.Series(valores).isna().sum())
+
+labels_sem = ["Semana (100%)"]
+parents_sem = [""]
+values_sem = [total_actividades]
+colors_sem = ["#2c3e50"]
+
+if completadas > 0:
+    labels_sem.append("Completado")
+    parents_sem.append("Semana (100%)")
+    values_sem.append(completadas)
+    colors_sem.append("#27ae60")
+
+if pendientes > 0:
+    labels_sem.append("Pendiente de Confirmación")
+    parents_sem.append("Semana (100%)")
+    values_sem.append(pendientes)
+    colors_sem.append("#f39c12")
+
+if no_cumplidas > 0:
+    labels_sem.append("No Cumplido")
+    parents_sem.append("Semana (100%)")
+    values_sem.append(no_cumplidas)
+    colors_sem.append("#e74c3c")
+
+col_sem1, col_sem2 = st.columns([1, 1])
+
+with col_sem1:
+    fig_semana = go.Figure(go.Sunburst(
+        labels=labels_sem,
+        parents=parents_sem,
+        values=values_sem,
+        branchvalues="total",
+        marker=dict(colors=colors_sem),
+        textinfo="label+value+percent parent"
+    ))
+    fig_semana.update_layout(margin=dict(t=10, l=10, r=10, b=10))
+    st.plotly_chart(fig_semana, use_container_width=True)
+
+with col_sem2:
+    st.write("**Detalle de Registro Semanal:**")
+    st.dataframe(df_actividades.fillna("Pendiente"), use_container_width=True)
+
+
+
 # ==========================================
 # 5. Vista General de Datos
 # ==========================================
