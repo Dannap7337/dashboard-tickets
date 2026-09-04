@@ -197,8 +197,8 @@ data_semana = {
     "Técnico": ["Juan Carlos"] * 5,
     "1. Revisión Correo": [1, 1, 1, 1, 1],
     "2. Evidencia Inicial": [1, 1, 1, 1, 1],
-    "3. Evidencia Final": [1, 1, 1, 1, None],      # 2 actividades de la tarde pendientes
-    "4. Envío Agenda": [1, 1, 1, 1, None]          # 2 actividades de la tarde pendientes
+    "3. Evidencia Final": [1, 1, 1, 1, 1],      # 2 actividades de la tarde pendientes
+    "4. Envío Agenda": [1, 1, 1, 1, 1]          # 2 actividades de la tarde pendientes
 }
 
 df_actividades = pd.DataFrame(data_semana)
