@@ -195,9 +195,9 @@ st.subheader("📋 5. Cumplimiento de Actividades Semanales (Semana Actual)")
 data_semana = {
     "Día": ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"],
     "Técnico": ["Juan Carlos"] * 5,
-    "1. Revisión Correo": [1, 1, 1, 1, 1],
+    "1. Revisión Correo": [1, None, None, None, None],
     "2. Evidencia Inicial": [1, None, None, None, None],
-    "3. Evidencia Final": [None, 1, 1, 1, 1],      # 2 actividades de la tarde pendientes
+    "3. Evidencia Final": [None, None, None, None, None],      # 2 actividades de la tarde pendientes
     "4. Envío Agenda": [None, None, None, None, None]          # 2 actividades de la tarde pendientes
 }
 
