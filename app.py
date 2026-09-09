@@ -195,10 +195,10 @@ st.subheader("📋 5. Cumplimiento de Actividades Semanales (Semana Actual)")
 data_semana = {
     "Día": ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"],
     "Técnico": ["Juan Carlos"] * 5,
-    "1. Revisión Correo": [1, None, None, None, None],
-    "2. Evidencia Inicial": [1, None, None, None, None],
-    "3. Evidencia Final": [None, None, None, None, None],      # 2 actividades de la tarde pendientes
-    "4. Envío Agenda": [None, None, None, None, None]          # 2 actividades de la tarde pendientes
+    "1. Revisión Correo": [1, 1, 1, None, None],
+    "2. Evidencia Inicial": [1, 1, 1, None, None],
+    "3. Evidencia Final": [1, 1, 1, None, None],      # 2 actividades de la tarde pendientes
+    "4. Envío Agenda": [1, 1, 1, None, None]          # 2 actividades de la tarde pendientes
 }
 
 df_actividades = pd.DataFrame(data_semana)
