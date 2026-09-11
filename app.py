@@ -120,7 +120,8 @@ with col_row1_2:
     # Simulación de estados para los 5 días hábiles
     data_agenda_sem = {
         "Día": ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"],
-        "Estado": ["Se envió", "Se envió", "Sin agenda física", "Se envió", "Falló"]
+        "Estado": ["Se envió", "Se envió", "Se envió", "Se envió", "Se envió"]
+    #"Sin agenda física" , "Falló" Agregar en caso de fallos
     }
     df_agenda_sem = pd.DataFrame(data_agenda_sem)
     resumen_agenda = df_agenda_sem["Estado"].value_counts().reset_index()
