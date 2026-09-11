@@ -33,7 +33,7 @@ col_row1_1, col_row1_2 = st.columns(2)
 col_row2_1, col_row2_2 = st.columns(2)
 
 # =========================================================
-# 1. Levantamiento de tickets (Simulación semanal sin agenda)
+# 1. Levantamiento de tickets (Sunburst jerárquico de 3 fases)
 # =========================================================
 with col_row1_1:
     st.subheader("📋 1. Levantamiento de Tickets (Semanal)")
@@ -46,49 +46,71 @@ with col_row1_1:
         "3. Evidencia Final": [1, 1, 1, 1, None]
     }
     df_act = pd.DataFrame(data_levantamiento)
-    cols_eval = ["1. Revisión Correo", "2. Evidencia Inicial", "3. Evidencia Final"]
+    procesos = ["1. Revisión Correo", "2. Evidencia Inicial", "3. Evidencia Final"]
 
-    total_items = len(df_act) * len(cols_eval)
-    vals = df_act[cols_eval].values.flatten()
+    # Estructura base: Raíz (Centro)
+    ids = ["RAIZ"]
+    labels = ["Levantamiento"]
+    parents = [""]
+    values = [len(df_act) * len(procesos)]
+    colors = ["#2c3e50"]
 
-    completados = int(pd.Series(vals).eq(1).sum())
-    no_cumplidos = int(pd.Series(vals).eq(0).sum())
-    pendientes = int(pd.Series(vals).isna().sum())
+    color_estado_map = {
+        "Completado": "#27ae60",
+        "Pendiente": "#f39c12",
+        "No Cumplido": "#e74c3c"
+    }
 
-    labels_1 = ["Levantamiento (100%)"]
-    parents_1 = [""]
-    values_1 = [total_items]
-    colors_1 = ["#2c3e50"]
+    # Nivel 1: Procesos | Nivel 2: Estatus por cada proceso
+    for proc in procesos:
+        proc_id = f"PROC_{proc}"
+        serie = df_act[proc]
+        
+        # Conteo por estado en cada proceso
+        n_comp = int(serie.eq(1).sum())
+        n_pend = int(serie.isna().sum())
+        n_fall = int(serie.eq(0).sum())
 
-    if completados > 0:
-        labels_1.append("Completado")
-        parents_1.append("Levantamiento (100%)")
-        values_1.append(completados)
-        colors_1.append("#27ae60")
+        # Nodo de proceso intermedio
+        ids.append(proc_id)
+        labels.append(proc)
+        parents.append("RAIZ")
+        values.append(len(serie))
+        colors.append("#34495e")
 
-    if pendientes > 0:
-        labels_1.append("Pendiente de Confirmación")
-        parents_1.append("Levantamiento (100%)")
-        values_1.append(pendientes)
-        colors_1.append("#f39c12")
+        # Hojas exteriores de estados
+        if n_comp > 0:
+            ids.append(f"{proc_id}_COMP")
+            labels.append("Completado")
+            parents.append(proc_id)
+            values.append(n_comp)
+            colors.append(color_estado_map["Completado"])
 
-    if no_cumplidos > 0:
-        labels_1.append("No Cumplido")
-        parents_1.append("Levantamiento (100%)")
-        values_1.append(no_cumplidos)
-        colors_1.append("#e74c3c")
+        if n_pend > 0:
+            ids.append(f"{proc_id}_PEND")
+            labels.append("Pendiente")
+            parents.append(proc_id)
+            values.append(n_pend)
+            colors.append(color_estado_map["Pendiente"])
+
+        if n_fall > 0:
+            ids.append(f"{proc_id}_FALL")
+            labels.append("No Cumplido")
+            parents.append(proc_id)
+            values.append(n_fall)
+            colors.append(color_estado_map["No Cumplido"])
 
     fig1 = go.Figure(go.Sunburst(
-        labels=labels_1,
-        parents=parents_1,
-        values=values_1,
+        ids=ids,
+        labels=labels,
+        parents=parents,
+        values=values,
         branchvalues="total",
-        marker=dict(colors=colors_1),
+        marker=dict(colors=colors),
         textinfo="label+value+percent parent"
     ))
     fig1.update_layout(margin=dict(t=10, l=10, r=10, b=10))
     st.plotly_chart(fig1, use_container_width=True)
-
 # =========================================================
 # 2. Envío de agenda (Semanal simulado: 3 estados)
 # =========================================================
