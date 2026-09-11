@@ -22,7 +22,7 @@ def load_data(file_path):
 
     return df
 
-EXCEL_PATH = 'Agosto.xlsx'  # Ajusta al nombre de tu archivo de agosto
+EXCEL_PATH = 'Book1.xlsx'  # Ajusta al nombre de tu archivo de agosto
 try:
     df = load_data(EXCEL_PATH)
 except Exception:
