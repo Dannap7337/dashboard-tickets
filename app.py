@@ -156,7 +156,8 @@ with col_row2_1:
         {"dias": 2}, {"dias": 1}, {"dias": 3}, {"dias": 1}, {"dias": 1},
         {"dias": 1}, {"dias": 1}, {"dias": 1}, {"dias": 1}, {"dias": 1},
         {"dias": 1}, {"dias": 1}, {"dias": 1}, {"dias": 1}, {"dias": 1},
-        {"dias": 1}, {"dias": 1}, {"dias": 1}, {"dias": 1}
+        {"dias": 1}, {"dias": 1}, {"dias": 1}, {"dias": 1}, {"dias": 1},
+        {"dias": 1}, {"dias": 1}, {"dias": 1}, {"dias": 1}, 
     ]
     df_resp = pd.DataFrame(data_respuesta)
 
