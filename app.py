@@ -4,7 +4,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-st.set_page_config(page_title="Dashboard de Tickets - Agosto", layout="wide")
+st.set_page_config(page_title="Dashboard de Tickets - Mensual", layout="wide")
 st.title("📊 Panel de Métricas Operativas")
 
 # --- Carga y limpieza de datos (Agosto) ---
