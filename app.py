@@ -41,9 +41,9 @@ with col_row1_1:
     data_levantamiento = {
         "Día": ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"],
         "Técnico": ["Juan Carlos"] * 5,
-        "1. Revisión Correo": [1, 1, 1, 1, 1],
-        "2. Evidencia Inicial": [1, 1, 1, 1, 1],
-        "3. Evidencia Final": [1, 1, 1, 1, None]
+        "1. Revisión Correo": [1, 1, 1, None, None],
+        "2. Evidencia Inicial": [1, 1, 1, None, None],
+        "3. Evidencia Final": [1, 1, 1, None, None]
     }
     df_act = pd.DataFrame(data_levantamiento)
     procesos = ["1. Revisión Correo", "2. Evidencia Inicial", "3. Evidencia Final"]
